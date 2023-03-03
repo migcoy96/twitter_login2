@@ -1,7 +1,8 @@
 import 'dart:core';
 
-import 'package:twitter_login/entity/user.dart';
-import 'package:twitter_login/src/twitter_login.dart';
+import 'package:twitter_login2/entity/user.dart';
+import 'package:twitter_login2/src/twitter_login.dart';
+
 
 /// The result when the Twitter login flow has completed.
 /// The login methods always return an instance of this class.
@@ -13,7 +14,7 @@ class AuthResult {
   final String? _authTokenSecret;
 
   /// The status after a Twitter login flow has completed
-  final TwitterLoginStatus? _status;
+  final TwitterLoginStatus _status; // Note: removed null status for compatibility
 
   /// The error message when the log in flow completed with an error
   final String? _errorMessage;
@@ -31,7 +32,7 @@ class AuthResult {
   AuthResult({
     String? authToken,
     String? authTokenSecret,
-    TwitterLoginStatus? status,
+    required status,
     String? errorMessage,
     User? user,
   })  : this._authToken = authToken,

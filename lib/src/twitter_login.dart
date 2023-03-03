@@ -2,12 +2,21 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:twitter_login/entity/auth_result.dart';
-import 'package:twitter_login/entity/user.dart';
-import 'package:twitter_login/schemes/access_token.dart';
-import 'package:twitter_login/schemes/request_token.dart';
-import 'package:twitter_login/src/auth_browser.dart';
-import 'package:twitter_login/src/exception.dart';
+
+//import 'package:twitter_login/entity/auth_result.dart';
+// import 'package:twitter_login/entity/user.dart';
+// import 'package:twitter_login/schemes/access_token.dart';
+// import 'package:twitter_login/schemes/request_token.dart';
+// import 'package:twitter_login/src/auth_browser.dart';
+// import 'package:twitter_login/src/exception.dart';
+
+/// New imports
+import 'package:twitter_login2/entity/auth_result.dart';
+import 'package:twitter_login2/entity/user.dart';
+import 'package:twitter_login2/schemes/access_token.dart';
+import 'package:twitter_login2/schemes/request_token.dart';
+import 'package:twitter_login2/src/auth_browser.dart';
+import 'package:twitter_login2/src/exception.dart';
 
 /// The status after a Twitter login flow has completed.
 enum TwitterLoginStatus {
@@ -30,26 +39,38 @@ class TwitterLogin {
   final String apiSecretKey;
 
   /// Callback URL
-  final String redirectURI;
+  //final String redirectURI;
+  late String redirectURI = 'autopostmedia://';
+  //redirectURI = 'twitterlogin://';
+  void setURI(){
+    redirectURI += DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  /// Map of authentication credentials and user profiles for signed-in users.
+  final Map<String, AuthResult> userMap = {};
 
   static const _channel = const MethodChannel('twitter_login');
   static final _eventChannel = EventChannel('twitter_login/event');
   static final Stream<dynamic> _eventStream =
-      _eventChannel.receiveBroadcastStream();
+  _eventChannel.receiveBroadcastStream();
 
   /// constructor
   TwitterLogin({
     required this.apiKey,
     required this.apiSecretKey,
-    required this.redirectURI,
+    //required this.redirectURI,
   });
 
   /// Logs the user
   /// Forces the user to enter their credentials to ensure the correct users account is authorized.
+
+ // String redirectURI = 'twitterlogin://';
+
   Future<AuthResult> login({bool forceLogin = false}) async {
     String? resultURI;
     RequestToken requestToken;
     try {
+      setURI();
       requestToken = await RequestToken.getRequestToken(
         apiKey,
         apiSecretKey,
@@ -93,16 +114,16 @@ class TwitterLogin {
       if (Platform.isIOS || Platform.isMacOS) {
         /// Login to Twitter account with SFAuthenticationSession or ASWebAuthenticationSession.
         resultURI =
-            await authBrowser.doAuth(requestToken.authorizeURI, uri.scheme);
+        await authBrowser.doAuth(requestToken.authorizeURI, uri.scheme);
       } else if (Platform.isAndroid) {
         // Login to Twitter account with chrome_custom_tabs.
         final success =
-            await authBrowser.open(requestToken.authorizeURI, uri.scheme);
+        await authBrowser.open(requestToken.authorizeURI, uri.scheme);
         if (!success) {
           throw PlatformException(
             code: '200',
             message:
-                'Could not open browser, probably caused by unavailable custom tabs.',
+            'Could not open browser, probably caused by unavailable custom tabs.',
           );
         }
         resultURI = await completer.future;
@@ -119,7 +140,9 @@ class TwitterLogin {
         throw CanceledByUserException();
       }
 
-      final queries = Uri.splitQueryString(Uri.parse(resultURI!).query);
+      final queries = Uri.splitQueryString(Uri
+          .parse(resultURI!)
+          .query);
       if (queries['error'] != null) {
         throw Exception('Error Response: ${queries['error']}');
       }
@@ -135,6 +158,11 @@ class TwitterLogin {
         queries,
       );
 
+
+      // final user = await User.getUserData(apiKey, apiSecretKey, token.authToken!, token.authTokenSecret!);
+      // //final status = user == null ? TwitterLoginStatus.error : TwitterLoginStatus.loggedIn;
+      // //final status? :
+
       if ((token.authToken?.isEmpty ?? true) ||
           (token.authTokenSecret?.isEmpty ?? true)) {
         return AuthResult(
@@ -146,18 +174,34 @@ class TwitterLogin {
         );
       }
 
-      return AuthResult(
-        authToken: token.authToken,
-        authTokenSecret: token.authTokenSecret,
-        status: TwitterLoginStatus.loggedIn,
-        errorMessage: null,
-        user: await User.getUserData(
-          apiKey,
-          apiSecretKey,
-          token.authToken!,
-          token.authTokenSecret!,
-        ),
-      );
+      /// New: create user variable
+      final user = await User.getUserData(
+          apiKey, apiSecretKey, token.authToken!, token.authTokenSecret!);
+
+      /// Store the authentication credentials and user profile for the signed-in user
+      final authResult = AuthResult(authToken: token.authToken,
+          authTokenSecret: token.authTokenSecret,
+          status: TwitterLoginStatus.loggedIn,
+          errorMessage: null,
+          user: user);
+      userMap[token.userId!] = authResult;
+      return authResult;
+
+      // return AuthResult(
+      //   authToken: token.authToken,
+      //   authTokenSecret: token.authTokenSecret,
+      //   status: TwitterLoginStatus.loggedIn,
+      //   errorMessage: null,
+      //   user: await User.getUserData(
+      //     apiKey,
+      //     apiSecretKey,
+      //     token.authToken!,
+      //     token.authTokenSecret!,
+      //   ),
+      // );
+
+      // userMap[user.userId] = authResult;
+
     } on CanceledByUserException {
       return AuthResult(
         authToken: null,
@@ -224,16 +268,16 @@ class TwitterLogin {
       if (Platform.isIOS || Platform.isMacOS) {
         /// Login to Twitter account with SFAuthenticationSession or ASWebAuthenticationSession.
         resultURI =
-            await authBrowser.doAuth(requestToken.authorizeURI, uri.scheme);
+        await authBrowser.doAuth(requestToken.authorizeURI, uri.scheme);
       } else if (Platform.isAndroid) {
         // Login to Twitter account with chrome_custom_tabs.
         final success =
-            await authBrowser.open(requestToken.authorizeURI, uri.scheme);
+        await authBrowser.open(requestToken.authorizeURI, uri.scheme);
         if (!success) {
           throw PlatformException(
             code: '200',
             message:
-                'Could not open browser, probably caused by unavailable custom tabs.',
+            'Could not open browser, probably caused by unavailable custom tabs.',
           );
         }
         resultURI = await completer.future;
@@ -250,7 +294,9 @@ class TwitterLogin {
         throw CanceledByUserException();
       }
 
-      final queries = Uri.splitQueryString(Uri.parse(resultURI!).query);
+      final queries = Uri.splitQueryString(Uri
+          .parse(resultURI!)
+          .query);
       if (queries['error'] != null) {
         throw Exception('Error Response: ${queries['error']}');
       }
@@ -285,13 +331,25 @@ class TwitterLogin {
         token.userId!,
       );
 
-      return AuthResult(
+      /// Store the authentication credentials and user profile for the signed-in user
+      final authResult = AuthResult(
         authToken: token.authToken,
         authTokenSecret: token.authTokenSecret,
         status: TwitterLoginStatus.loggedIn,
         errorMessage: null,
         user: user,
       );
+      userMap[token.userId!] = authResult;
+      return authResult;
+
+
+      // return AuthResult(
+      //   authToken: token.authToken,
+      //   authTokenSecret: token.authTokenSecret,
+      //   status: TwitterLoginStatus.loggedIn,
+      //   errorMessage: null,
+      //   user: user,
+      // );
     } on CanceledByUserException {
       return AuthResult(
         authToken: null,
@@ -310,4 +368,26 @@ class TwitterLogin {
       );
     }
   }
+
+  /// Logs out the user associated with the specified user ID.
+  void logout(String userId) {
+    userMap.remove(userId);
+  }
+
+  /// Logs out all users who have been signed in.
+  void logoutAll() {
+    userMap.clear();
+  }
+
+  /// Returns the authenticated user for the specified user ID.
+  AuthResult? getAuthResult(String userId) {
+    return userMap[userId];
+  }
 }
+
+/// Exception that is thrown when the user cancels the login flow.
+// class CanceledByUserException implements Exception {
+//   /// Constructor.
+//   CanceledByUserException();
+// }
+

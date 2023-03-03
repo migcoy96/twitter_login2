@@ -1,4 +1,4 @@
-import 'package:twitter_login/src/utils.dart';
+import 'package:twitter_login2/src/utils.dart';
 
 /// The access token for Twitter API.
 class AccessToken {

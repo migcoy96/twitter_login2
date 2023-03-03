@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:twitter_login/src/utils.dart';
+import 'package:twitter_login2/src/utils.dart';
 
 class Oauth2 {
   /// get applicatoin Bearer Token.

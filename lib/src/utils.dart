@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:http/http.dart' as http;
-import 'package:twitter_login/src/signature.dart';
+import 'package:twitter_login2/src/signature.dart';
 
 /// Allows a Consumer application to obtain an OAuth Request Token to request user authorization.
 const REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token';

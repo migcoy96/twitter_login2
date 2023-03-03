@@ -1,5 +1,5 @@
-import 'package:twitter_login/src/oauth_2.dart';
-import 'package:twitter_login/src/utils.dart';
+import 'package:twitter_login2/src/oauth_2.dart';
+import 'package:twitter_login2/src/utils.dart';
 
 /// https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/user
 class User {
